@@ -10,6 +10,8 @@ import javax.persistence.*;
 import kernbeisser.DBConnection.DBConnection;
 import kernbeisser.Enums.*;
 import kernbeisser.Reports.ReportDTO.PriceListReportArticle;
+import kernbeisser.Security.Access.Access;
+import kernbeisser.Security.Access.AccessManager;
 import kernbeisser.Security.Key;
 import kernbeisser.Useful.Date;
 import kernbeisser.Useful.Tools;
@@ -257,7 +259,9 @@ public class ShoppingItem implements Serializable {
       article.setMetricUnits(MetricUnits.NONE);
       article.setVat(vat);
       article.setSupplier(supplier);
-      article.setSurchargeGroup(supplier.getOrPersistDefaultSurchargeGroup(em));
+      Access.runWithAccessManager(
+          AccessManager.NO_ACCESS_CHECKING,
+          () -> article.setSurchargeGroup(supplier.getOrPersistDefaultSurchargeGroup(em)));
       em.persist(article);
       em.flush();
       et.commit();
@@ -479,12 +483,6 @@ public class ShoppingItem implements Serializable {
     }
 
     return items.stream().filter(filter).filter(typeFilter).mapToDouble(argument).sum();
-  }
-
-  public ShoppingItem unproxy() {
-    ShoppingItem newInstance = new ShoppingItem();
-    Tools.copyInto(this, newInstance);
-    return newInstance;
   }
 
   @Key(PermissionKey.SHOPPING_ITEM_METRIC_UNITS_READ)
